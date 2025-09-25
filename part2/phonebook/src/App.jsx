@@ -49,6 +49,14 @@ const App = () => {
             setErrorMessage({ message: null, type: null })
           }, 5000)
         })
+        .catch(error => {
+          setErrorMessage(
+            { message: `Person validation failed: ${error.response.data.error}`, type: 'error'}
+          )
+          setTimeout(() => {
+            setErrorMessage({ message: null, type: null })
+          }, 5000)
+        })
     } else {
       if(window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)){
         const updateP = persons.find(p => p.name === newName)
@@ -73,11 +81,22 @@ const App = () => {
               setErrorMessage({ message: null, type: null })
             }, 5000)
           }).catch(error => {
-            setErrorMessage(
-              { message: `Information of ${newName} has already been removed from server`, type: 'error' }
-            )
-            setPersons(persons.filter(n => n.name !== newName))
-            setFiltered(filtered.filter(n => n.name !== newName))
+            const status = error.response?.status
+            if(status === 400){
+              setErrorMessage(
+                { message: `Validation error: ${error.response.data.error}`, type: 'error' }
+              )
+            } else if(status === 404) {
+              setErrorMessage(
+                { message: `Information of ${newName} has already been removed from server`, type: 'error' }
+              )
+              setPersons(persons.filter(n => n.name !== newName))
+              setFiltered(filtered.filter(n => n.name !== newName))
+            } else {
+              setErrorMessage(
+                { message: `Unknown error`, type: 'error' }
+              )
+            }
             setNewName('')
             setNewNumber('')
             setTimeout(() => {
@@ -87,7 +106,7 @@ const App = () => {
       } else {
         console.log('Addition canceled')
         setNewName('')
-          setNewNumber('')
+        setNewNumber('')
       }
     }
   }
